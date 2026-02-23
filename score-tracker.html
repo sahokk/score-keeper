@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#f5f5f7">
+<title>スコアキーパー</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #f5f5f7;
+  --surface:  #ffffff;
+  --card:     #ebebed;
+  --border:   rgba(0,0,0,0.07);
+  --border-hi:rgba(0,0,0,0.18);
+  --text:     #111111;
+  --muted:    #aaaaaa;
+  --muted2:   #777777;
+  --accent:   #0d9e8a;        /* インディゴブルー */
+  --accent-bg:rgba(13,158,138,0.07);
+  --col-name: 104px;
+  --col-total: 74px;
+  --col-round: 60px;
+  --row-h:    50px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100dvh; overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+.header {
+  position: sticky; top: 0; z-index: 200; height: 54px;
+  background: rgba(245,245,247,.92); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 18px;
+}
+.header-title {
+  font-family: 'Oswald', sans-serif; font-size: 16px;
+  letter-spacing: 3px; color: var(--muted); cursor: pointer; user-select: none;
+  text-transform: uppercase;
+}
+.header-game-name {
+  font-size: 14px; font-weight: 700; letter-spacing: .3px;
+  max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.header-btn {
+  background: none; border: none; color: var(--muted2);
+  font-size: 22px; cursor: pointer; padding: 8px; line-height: 1;
+}
+
+/* ── SCREENS ── */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ── HOME ── */
+.home-hero { padding: 40px 24px 20px; }
+.home-hero h1 {
+  font-family: 'Oswald', sans-serif; font-size: 11px; letter-spacing: 4px;
+  color: var(--muted); text-transform: uppercase; margin-bottom: 6px;
+}
+.home-hero p { font-size: 26px; font-weight: 900; letter-spacing: -.5px; }
+
+.btn-new-game {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: calc(100% - 32px); margin: 16px 16px 0; padding: 17px;
+  background: var(--accent); color: #fff; border: none; border-radius: 12px;
+  font-family: 'Zen Maru Gothic', sans-serif; font-size: 15px; font-weight: 900;
+  cursor: pointer; transition: opacity .15s, transform .15s; letter-spacing: .3px;
+}
+.btn-new-game:active { opacity: .85; transform: scale(.98); }
+
+.game-list { padding: 8px 16px 100px; }
+.game-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 16px 18px; margin-bottom: 8px; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: border-color .15s;
+}
+.game-card:active { border-color: var(--border-hi); }
+.game-card-name { font-size: 15px; font-weight: 700; }
+.game-card-meta { font-size: 12px; color: var(--muted2); margin-top: 3px; }
+.game-card-arrow { font-size: 18px; color: var(--muted); }
+.game-card-leader { font-size: 12px; color: var(--accent); margin-top: 4px; font-weight: 700; }
+
+.empty-state { text-align: center; padding: 56px 24px; color: var(--muted2); }
+.empty-icon { font-size: 40px; margin-bottom: 14px; opacity: .4; }
+.empty-state p { font-size: 14px; line-height: 1.7; }
+
+/* ── SETUP ── */
+.setup-body { padding: 20px 16px 120px; }
+.section-label {
+  font-size: 11px; letter-spacing: 2px; color: var(--muted);
+  text-transform: uppercase; margin-bottom: 10px;
+}
+.input-field {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 15px 16px; color: var(--text);
+  font-family: 'Zen Maru Gothic', sans-serif; font-size: 16px; outline: none;
+  transition: border-color .2s;
+}
+.input-field:focus { border-color: var(--accent); }
+.player-input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+.player-input-row .input-field { flex: 1; }
+.btn-remove {
+  width: 44px; height: 44px; flex-shrink: 0;
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 10px; color: var(--muted2); font-size: 18px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.btn-remove:active { border-color: var(--border-hi); }
+.btn-add-player {
+  width: 100%; padding: 14px; margin-top: 4px;
+  background: transparent; border: 1px dashed var(--border);
+  border-radius: 12px; color: var(--muted2);
+  font-family: 'Zen Maru Gothic', sans-serif; font-size: 14px; cursor: pointer;
+}
+.btn-add-player:active { border-color: var(--accent); color: var(--accent); }
+.btn-start {
+  position: fixed; bottom: 24px; left: 16px; right: 16px; padding: 17px;
+  background: var(--accent); color: #fff; border: none; border-radius: 12px;
+  font-family: 'Zen Maru Gothic', sans-serif; font-size: 15px; font-weight: 900;
+  cursor: pointer; transition: transform .15s; letter-spacing: .3px;
+}
+.btn-start:active { transform: scale(.98); }
+.mt16 { margin-top: 16px; }
+
+/* ── GAME SCREEN ── */
+#gameScreen { padding-bottom: 90px; }
+
+/* サマリーバー */
+.summary-bar-wrap {
+  position: relative;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.summary-bar-wrap::after {
+  content: '';
+  position: absolute; top: 0; right: 0; bottom: 0; width: 40px;
+  background: linear-gradient(to right, transparent, var(--surface));
+  pointer-events: none;
+}
+.summary-bar {
+  display: flex; align-items: center; gap: 6px; padding: 10px 16px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.summary-bar::-webkit-scrollbar { display: none; }
+.rank-chip {
+  display: flex; align-items: center; gap: 5px;
+  border: 1px solid var(--border); border-radius: 20px;
+  padding: 5px 11px 5px 7px; flex-shrink: 0; background: var(--card);
+}
+.rank-chip.rank-1 { border-color: var(--accent); background: var(--accent-bg); }
+.rank-chip-num { font-family: 'Oswald', sans-serif; font-size: 13px; color: var(--muted); }
+.rank-chip.rank-1 .rank-chip-num { color: var(--accent); }
+.rank-chip-name { font-size: 12px; font-weight: 700; white-space: nowrap; color: var(--muted2); }
+.rank-chip.rank-1 .rank-chip-name { color: var(--text); }
+.rank-chip-score { font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 700; margin-left: 3px; }
+.rank-chip.rank-1 .rank-chip-score { color: var(--accent); }
+
+/* undoバー */
+.undo-bar { display: flex; align-items: center; justify-content: flex-end; padding: 8px 16px 2px; }
+.btn-undo {
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 20px; padding: 5px 14px; color: var(--muted2);
+  font-family: 'Zen Maru Gothic', sans-serif; font-size: 12px; cursor: pointer;
+}
+.btn-undo:active { border-color: var(--border-hi); color: var(--text); }
+
+/* ── TABLE ── */
+.table-wrap-outer { position: relative; }
+.table-wrap-outer::after {
+  content: '';
+  position: absolute; top: 0; right: 0; bottom: 0; width: 32px;
+  background: linear-gradient(to right, transparent, var(--bg));
+  pointer-events: none; z-index: 6;
+}
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table-wrap::-webkit-scrollbar { height: 2px; }
+.table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+table.score-table { border-collapse: collapse; min-width: 100%; table-layout: fixed; }
+
+.score-table thead th {
+  position: sticky; top: 0; z-index: 10; background: var(--surface);
+  border-bottom: 1px solid var(--border); height: 36px;
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+  color: var(--muted); text-transform: uppercase; white-space: nowrap;
+}
+.score-table thead th.col-name {
+  position: sticky; left: 0; z-index: 20; width: var(--col-name); min-width: var(--col-name);
+  text-align: left; padding-left: 16px; background: var(--surface);
+}
+.score-table thead th.col-total {
+  position: sticky; left: var(--col-name); z-index: 20;
+  width: var(--col-total); min-width: var(--col-total);
+  background: var(--surface); border-right: 1px solid var(--border); text-align: center;
+}
+.score-table thead th.col-round { width: var(--col-round); min-width: var(--col-round); text-align: center; }
+.score-table thead th.col-new   { width: var(--col-round); min-width: var(--col-round); text-align: center; color: var(--accent); }
+
+.score-table tbody tr.data-row { border-bottom: 1px solid var(--border); }
+.score-table tbody td { height: var(--row-h); vertical-align: middle; background: var(--bg); }
+
+td.col-name {
+  position: sticky; left: 0; z-index: 5; width: var(--col-name); min-width: var(--col-name);
+  background: var(--bg); padding: 0 8px 0 16px;
+  font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+td.col-total {
+  position: sticky; left: var(--col-name); z-index: 5;
+  width: var(--col-total); min-width: var(--col-total);
+  background: var(--bg); text-align: center;
+  font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 700;
+  border-right: 1px solid var(--border); cursor: pointer;
+}
+.player-row-1st td.col-name  { background: var(--accent-bg); }
+.player-row-1st td.col-total { background: var(--accent-bg); color: var(--accent); }
+
+td.col-round {
+  width: var(--col-round); min-width: var(--col-round); text-align: center;
+  font-size: 14px; font-weight: 700; color: var(--muted2); cursor: pointer;
+}
+td.col-new {
+  width: var(--col-round); min-width: var(--col-round); text-align: center;
+  cursor: pointer; background: var(--accent-bg);
+}
+.cell-pos  { color: var(--text); }
+.cell-neg  { color: var(--muted2); }
+.cell-zero { color: var(--muted); }
+
+td.cell-active { background: rgba(13,158,138,.06) !important; }
+td.cell-active span { outline: 1.5px solid var(--accent); border-radius: 5px; }
+
+.new-cell-val {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 46px; height: 32px;
+  border: 1px solid rgba(13,158,138,.25); border-radius: 7px;
+  font-size: 14px; font-weight: 700; color: var(--muted);
+}
+.new-cell-val.has-val { border-color: var(--accent); color: var(--accent); }
+
+
+/* ── INPUT PROGRESS ── */
+.input-progress {
+  display: none; padding: 6px 16px 4px;
+  align-items: center; gap: 10px;
+}
+.input-progress.visible { display: flex; }
+.progress-track {
+  flex: 1; height: 4px; background: var(--card); border-radius: 2px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: var(--accent); border-radius: 2px;
+  transition: width .3s ease;
+}
+.progress-label { font-size: 11px; color: var(--muted2); white-space: nowrap; }
+
+/* ── ACCORDION SPIN ROW ── */
+tr.spin-row td {
+  background: var(--surface) !important;
+  padding: 0; height: auto !important;
+  border-bottom: 1px solid var(--border);
+  border-top: 1px solid var(--accent);
+}
+.spin-row-inner {
+  padding: 12px 16px 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.spin-row-label {
+  display: flex; align-items: center; gap: 8px; font-size: 12px;
+}
+.spin-row-name { font-weight: 700; color: var(--text); }
+.spin-row-round {
+  font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--accent); padding: 2px 8px;
+  border: 1px solid rgba(13,158,138,.25); border-radius: 10px;
+}
+.spin-row-close {
+  margin-left: auto; background: none; border: none; color: var(--muted);
+  font-size: 18px; cursor: pointer; line-height: 1; padding: 4px 6px;
+}
+.spin-row-close:active { color: var(--text); }
+
+.spin-controls {
+  display: flex; align-items: center; gap: 10px;
+}
+/* マイナス・プラスのグループをそれぞれ隣接させる */
+.spin-group {
+  display: flex; gap: 4px;
+}
+.spin-btn {
+  height: 48px; width: 52px; border: none; border-radius: 10px;
+  font-family: 'Zen Maru Gothic', sans-serif; font-size: 15px; font-weight: 700;
+  cursor: pointer; flex-shrink: 0; transition: filter .1s, transform .1s;
+  display: flex; align-items: center; justify-content: center;
+}
+.spin-btn:active { transform: scale(.88); filter: brightness(.88); }
+/* マイナス系：赤みがかった背景 */
+.spin-btn.m10,
+.spin-btn.m1 {
+  background: #fde8e8; color: #c0392b;
+}
+/* プラス系：ティール背景 */
+.spin-btn.p1,
+.spin-btn.p10 {
+  background: rgba(13,158,138,.13); color: var(--accent);
+}
+
+.spin-val {
+  flex: 1; text-align: center;
+  font-family: 'Oswald', sans-serif; font-size: 34px; font-weight: 700;
+  color: var(--text); line-height: 1;
+}
+.spin-val.zero { color: var(--muted); }
+.spin-val.neg  { color: #c0392b; }
+
+.spin-confirm {
+  height: 48px; padding: 0 16px; flex-shrink: 0;
+  background: var(--accent); color: #fff; border: none; border-radius: 10px;
+  font-family: 'Zen Maru Gothic', sans-serif; font-size: 14px; font-weight: 900;
+  cursor: pointer; white-space: nowrap; transition: transform .1s; letter-spacing: .3px;
+}
+.spin-confirm:active { transform: scale(.96); }
+.spin-confirm.hidden { display: none; }
+
+/* ラウンド確定ボタン */
+.btn-confirm-round {
+  position: fixed; bottom: 76px; left: 16px; right: 16px; padding: 16px;
+  background: var(--accent); color: #fff; border: none; border-radius: 12px;
+  font-family: 'Zen Maru Gothic', sans-serif; font-size: 15px; font-weight: 900;
+  cursor: pointer; transition: transform .15s; display: none; z-index: 150;
+  letter-spacing: .3px;
+}
+.btn-confirm-round.visible { display: block; }
+.btn-confirm-round:active { transform: scale(.98); }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 180;
+  background: rgba(245,245,247,.95); backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+  display: flex; height: 64px; padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; background: none; border: none; color: var(--muted);
+  font-family: 'Zen Maru Gothic', sans-serif; font-size: 10px; cursor: pointer;
+}
+.nav-btn:active { color: var(--accent); }
+.nav-icon { font-size: 18px; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 300;
+  display: none; align-items: flex-end;
+}
+.modal-overlay.open { display: flex; }
+.modal-sheet {
+  background: var(--surface); border-radius: 20px 20px 0 0;
+  padding: 24px 20px 40px; width: 100%; border-top: 1px solid var(--border);
+}
+.modal-title { font-size: 15px; font-weight: 700; margin-bottom: 18px; text-align: center; color: var(--muted2); }
+.modal-actions { display: flex; flex-direction: column; gap: 8px; }
+.btn-modal {
+  width: 100%; padding: 15px; border: none; border-radius: 12px;
+  font-family: 'Zen Maru Gothic', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.btn-modal-danger { background: var(--accent); color: #fff; }
+.btn-modal-cancel { background: var(--card); color: var(--muted2); }
+
+input.total-edit {
+  width: 62px; height: 34px; background: var(--surface);
+  border: 1.5px solid var(--accent); border-radius: 7px; color: var(--accent);
+  font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 700;
+  text-align: center; outline: none;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-title" id="headerTitle" onclick="headerBack()">SCORE KEEPER</div>
+  <div class="header-game-name" id="headerGameName" style="display:none"></div>
+  <button class="header-btn" id="headerMenuBtn" onclick="showGameMenu()" style="display:none">⋯</button>
+</div>
+
+<!-- HOME -->
+<div id="homeScreen" class="screen active">
+  <div class="home-hero"><h1>SCORE KEEPER</h1><p>ゲームを選んでスタート</p></div>
+  <button class="btn-new-game" onclick="showSetup()"><span style="font-size:20px">＋</span> 新しいゲーム</button>
+  <div class="game-list mt16" id="gameList"></div>
+</div>
+
+<!-- SETUP -->
+<div id="setupScreen" class="screen">
+  <div class="setup-body">
+    <div class="section-label">ゲーム名</div>
+    <input id="gameName" class="input-field" type="text" placeholder="例：人生ゲーム、大富豪…" maxlength="20">
+    <div class="section-label mt16">プレイヤー</div>
+    <div id="playerInputs"></div>
+    <button class="btn-add-player" onclick="addPlayerInput()">＋ プレイヤーを追加</button>
+  </div>
+  <button class="btn-start" onclick="startGame()">ゲームスタート →</button>
+</div>
+
+<!-- GAME -->
+<div id="gameScreen" class="screen">
+  <div class="summary-bar-wrap"><div class="summary-bar" id="summaryBar"></div></div>
+  <div class="undo-bar" id="undoBar" style="display:none">
+    <button class="btn-undo" id="undoBtn" onclick="undoLastRound()"></button>
+  </div>
+  <div class="input-progress" id="inputProgress"><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div><span class="progress-label" id="progressLabel"></span></div>
+  <div class="table-wrap-outer"><div class="table-wrap">
+    <table class="score-table">
+      <thead><tr id="tableHead"></tr></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div></div>
+  <button class="btn-confirm-round" id="confirmRoundBtn" onclick="confirmRound()">このラウンドを確定 ✓</button>
+  <div class="bottom-nav">
+    <button class="nav-btn" onclick="showHome()"><span class="nav-icon">🏠</span><span>ホーム</span></button>
+    <button class="nav-btn" onclick="showGameMenu()"><span class="nav-icon">⚙️</span><span>設定</span></button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-sheet">
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+let state = { games: [], currentGameId: null };
+const save = () => localStorage.setItem('sk_v3', JSON.stringify(state));
+const load = () => { const r = localStorage.getItem('sk_v3') || localStorage.getItem('sk_v2'); if (r) state = JSON.parse(r); };
+const curGame = () => state.games.find(g => g.id === state.currentGameId);
+
+// アコーディオンスピン状態
+// { playerIdx, roundIdx ('new' or 0..n-1) }
+let spinState = null;
+// 今のラウンドの入力バッファ { [playerIdx]: value }
+let newInputs = {};
+
+// ===== SCREENS =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function headerBack() {
+  if (document.querySelector('.screen.active').id !== 'homeScreen') showHome();
+}
+
+// ===== HOME =====
+function showHome() {
+  state.currentGameId = null; spinState = null; newInputs = {};
+  document.getElementById('headerTitle').style.display = '';
+  document.getElementById('headerGameName').style.display = 'none';
+  document.getElementById('headerMenuBtn').style.display = 'none';
+  renderGameList();
+  showScreen('homeScreen');
+}
+function renderGameList() {
+  const el = document.getElementById('gameList');
+  if (!state.games.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🎲</div><p>まだゲームがありません<br>「新しいゲーム」から始めましょう</p></div>';
+    return;
+  }
+  el.innerHTML = state.games.map(g => {
+    const leader = [...g.players].sort((a,b) => b.total - a.total)[0];
+    const leaderTxt = g.rounds.length > 0 ? `🥇 ${leader.name}（${leader.total}点）` : 'まだスコアなし';
+    return `
+    <div class="game-card" onclick="openGame('${g.id}')">
+      <div>
+        <div class="game-card-name">${g.name}</div>
+        <div class="game-card-meta">${g.players.length}人 · R${g.rounds.length} · ${g.createdAt}</div>
+        <div class="game-card-leader">${leaderTxt}</div>
+      </div>
+      <div class="game-card-arrow">›</div>
+    </div>`;
+  }).join('');
+}
+
+// ===== SETUP =====
+function showSetup() {
+  document.getElementById('gameName').value = '';
+  document.getElementById('playerInputs').innerHTML = '';
+  addPlayerInput(); addPlayerInput();
+  showScreen('setupScreen');
+}
+function addPlayerInput() {
+  const c = document.getElementById('playerInputs');
+  const idx = c.children.length + 1;
+  const row = document.createElement('div');
+  row.className = 'player-input-row';
+  row.innerHTML = `<input class="input-field player-name-input" type="text" placeholder="プレイヤー ${idx}" maxlength="10">
+    <button class="btn-remove" onclick="this.parentElement.remove()">×</button>`;
+  c.appendChild(row);
+}
+function startGame() {
+  const name = document.getElementById('gameName').value.trim() || '新しいゲーム';
+  const inputs = [...document.querySelectorAll('.player-name-input')];
+  if (!inputs.length) { alert('プレイヤーを追加してください'); return; }
+  const players = inputs.map((inp, i) => ({ name: inp.value.trim() || `P${i+1}`, total: 0 }));
+  const game = { id: Date.now().toString(), name, players, rounds: [], currentRound: 1, createdAt: new Date().toLocaleDateString('ja-JP') };
+  state.games.unshift(game);
+  state.currentGameId = game.id;
+  save(); openGame(game.id);
+}
+
+// ===== GAME =====
+function openGame(id) {
+  state.currentGameId = id; spinState = null; newInputs = {};
+  const g = curGame();
+  document.getElementById('headerTitle').style.display = 'none';
+  document.getElementById('headerGameName').style.display = '';
+  document.getElementById('headerGameName').textContent = g.name;
+  document.getElementById('headerMenuBtn').style.display = '';
+  renderTable(); showScreen('gameScreen');
+}
+
+// ===== TABLE RENDER =====
+function renderTable() {
+  const g = curGame(); if (!g) return;
+
+  // サマリーバー
+  const ranked = [...g.players].map((p, i) => ({...p, i})).sort((a, b) => b.total - a.total);
+  document.getElementById('summaryBar').innerHTML = ranked.map((p, r) => `
+    <div class="rank-chip ${r===0?'rank-1':''}">
+      <span class="rank-chip-num">${r+1}</span>
+      <span class="rank-chip-name">${p.name}</span>
+      <span class="rank-chip-score">${p.total}</span>
+    </div>`).join('');
+
+  // undoバー
+  const undoBar = document.getElementById('undoBar');
+  if (g.rounds.length > 0) {
+    undoBar.style.display = 'flex';
+    document.getElementById('undoBtn').textContent = `↩ R${g.rounds.length} を取り消す`;
+  } else {
+    undoBar.style.display = 'none';
+  }
+
+  // ヘッダー
+  let head = `<th class="col-name">名前</th><th class="col-total">合計</th>`;
+  for (let r = 0; r < g.rounds.length; r++) head += `<th class="col-round">R${r+1}</th>`;
+  head += `<th class="col-new">R${g.currentRound}</th>`;
+  document.getElementById('tableHead').innerHTML = head;
+
+  // ボディ：合計順で表示
+  const sorted = [...g.players].map((p, i) => ({...p, idx: i})).sort((a, b) => b.total - a.total);
+  const totalCols = g.rounds.length + 1; // 過去ラウンド + 今のラウンド列
+
+  const rows = [];
+  sorted.forEach((p, rank) => {
+    const isFirst = rank === 0;
+
+    // データ行
+    let tr = `<tr class="data-row ${isFirst?'player-row-1st':''}">`;
+    tr += `<td class="col-name" title="${p.name}">${p.name}</td>`;
+    tr += `<td class="col-total" data-idx="${p.idx}" id="total-cell-${p.idx}">${p.total}</td>`;
+
+    // 過去ラウンド列
+    for (let r = 0; r < g.rounds.length; r++) {
+      const v = g.rounds[r][p.idx];
+      const cls = v > 0 ? 'cell-pos' : v < 0 ? 'cell-neg' : 'cell-zero';
+      const sign = v > 0 ? '+' : '';
+      const isActive = spinState && spinState.playerIdx === p.idx && spinState.roundIdx === r;
+      tr += `<td class="col-round${isActive?' cell-active':''}" onclick="toggleSpin(${p.idx}, ${r})">
+        <span class="${cls}">${sign}${v}</span></td>`;
+    }
+
+    // 今のラウンド列
+    const nv = newInputs[p.idx] || 0;
+    const nvCls = nv !== 0 ? ' has-val' : '';
+    const nvSign = nv > 0 ? '+' : '';
+    const isActiveNew = spinState && spinState.playerIdx === p.idx && spinState.roundIdx === 'new';
+    tr += `<td class="col-new${isActiveNew?' cell-active':''}" onclick="toggleSpin(${p.idx}, 'new')">
+      <span class="new-cell-val${nvCls}">${nvSign}${nv}</span></td>`;
+    tr += '</tr>';
+    rows.push(tr);
+
+    // アコーディオン行（このプレイヤーが開いている場合）
+    if (spinState && spinState.playerIdx === p.idx) {
+      const sv = spinState.value;
+      const svDisplay = (sv > 0 ? '+' : '') + sv;
+      const svCls = sv > 0 ? '' : sv < 0 ? ' neg' : ' zero';
+      const isNew = spinState.roundIdx === 'new';
+      const roundLabel = isNew ? `R${g.currentRound}` : `R${spinState.roundIdx + 1}`;
+      rows.push(`<tr class="spin-row">
+        <td colspan="${totalCols + 2}">
+          <div class="spin-row-inner">
+            <div class="spin-row-label">
+              <span class="spin-row-name">${p.name}</span>
+              <span class="spin-row-round">${roundLabel}</span>
+              <button class="spin-row-close" onclick="closeSpin()">×</button>
+            </div>
+            <div class="spin-controls">
+              <div class="spin-group">
+                <button class="spin-btn m10" onclick="spinStep(-10)">−10</button>
+                <button class="spin-btn m1"  onclick="spinStep(-1)">−1</button>
+              </div>
+              <div class="spin-val${svCls}" id="spinVal">${svDisplay}</div>
+              <div class="spin-group">
+                <button class="spin-btn p1"  onclick="spinStep(1)">+1</button>
+                <button class="spin-btn p10" onclick="spinStep(10)">+10</button>
+              </div>
+              ${isNew ? `<button class="spin-confirm" onclick="spinConfirm()">確定</button>` : ''}
+            </div>
+          </div>
+        </td>
+      </tr>`);
+    }
+  });
+
+  document.getElementById('tableBody').innerHTML = rows.join('');
+
+  // 最右列へスクロール
+  const wrap = document.querySelector('.table-wrap');
+  setTimeout(() => { wrap.scrollLeft = wrap.scrollWidth; }, 50);
+
+  checkConfirmBtn();
+  bindTotalLongPress();
+}
+
+// ===== SPIN ACCORDION =====
+function toggleSpin(playerIdx, roundIdx) {
+  if (spinState && spinState.playerIdx === playerIdx && spinState.roundIdx === roundIdx) {
+    closeSpin(); return;
+  }
+  const g = curGame();
+  const value = roundIdx === 'new'
+    ? (newInputs[playerIdx] || 0)
+    : g.rounds[roundIdx][playerIdx];
+  spinState = { playerIdx, roundIdx, value };
+  renderTable();
+  setTimeout(() => {
+    const spinRow = document.querySelector('.spin-row');
+    if (spinRow) {
+      spinRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      bindSpinSwipe(spinRow);
+    }
+  }, 60);
+}
+
+// スワイプ下で閉じる
+function bindSpinSwipe(row) {
+  let startY = null;
+  row.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, { passive: true });
+  row.addEventListener('touchend', e => {
+    if (startY === null) return;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (dy > 40) closeSpin();
+    startY = null;
+  }, { passive: true });
+}
+
+function closeSpin() {
+  spinState = null;
+  renderTable();
+}
+
+function spinStep(delta) {
+  if (!spinState) return;
+  spinState.value += delta;
+  const g = curGame();
+
+  if (spinState.roundIdx !== 'new') {
+    // 過去ラウンド：即時保存
+    g.rounds[spinState.roundIdx][spinState.playerIdx] = spinState.value;
+    recalcTotal(g);
+    save();
+  }
+
+  // UI更新（テーブル全再描画は重いので要所だけ更新）
+  const valEl = document.getElementById('spinVal');
+  if (valEl) {
+    const v = spinState.value;
+    valEl.textContent = (v > 0 ? '+' : '') + v;
+    valEl.className = 'spin-val' + (v > 0 ? '' : v < 0 ? ' neg' : ' zero');
+  }
+  // 対象セルとサマリーだけ更新
+  updateActiveCell();
+  updateSummaryBar();
+}
+
+function spinConfirm() {
+  if (!spinState || spinState.roundIdx !== 'new') return;
+  newInputs[spinState.playerIdx] = spinState.value;
+  spinState = null;
+  const g = curGame();
+  // 全員入力済み（0含む）かチェック → 全員分あれば即ラウンド確定
+  const allDone = g.players.every((_, i) => newInputs[i] !== undefined);
+  if (allDone) {
+    confirmRound();
+  } else {
+    renderTable();
+    // 次の未入力プレイヤーを自動でフォーカス（サジェスト）
+    const nextIdx = g.players.findIndex((_, i) => newInputs[i] === undefined);
+    if (nextIdx >= 0) {
+      setTimeout(() => { toggleSpin(nextIdx, 'new'); }, 80);
+    }
+  }
+}
+
+// アクティブなセルの表示だけ更新
+function updateActiveCell() {
+  if (!spinState) return;
+  const g = curGame();
+  const v = spinState.value;
+  const cls = v > 0 ? 'cell-pos' : v < 0 ? 'cell-neg' : 'cell-zero';
+  const sign = v > 0 ? '+' : '';
+
+  if (spinState.roundIdx === 'new') {
+    const niCls = v > 0 ? '' : v < 0 ? ' neg' : ' zero';
+    // 今のラウンド列のセルを探す（セルのtd.cell-active）
+    const td = document.querySelector('td.col-new.cell-active');
+    if (td) td.innerHTML = `<span class="new-cell-val${niCls}">${sign}${v}</span>`;
+    // 合計欄も更新（新ラウンドはまだ確定していないので更新しない）
+  } else {
+    const td = document.querySelector('td.col-round.cell-active');
+    if (td) td.innerHTML = `<span class="${cls}">${sign}${v}</span>`;
+    // 合計欄を更新
+    const sorted = [...g.players].map((p, i) => ({...p, idx: i})).sort((a, b) => b.total - a.total);
+    const rank = sorted.findIndex(p => p.idx === spinState.playerIdx);
+    const totalCells = document.querySelectorAll('td.col-total');
+    if (totalCells[rank]) totalCells[rank].textContent = g.players[spinState.playerIdx].total;
+  }
+}
+
+function updateSummaryBar() {
+  const g = curGame(); if (!g) return;
+  const ranked = [...g.players].map((p, i) => ({...p, i})).sort((a, b) => b.total - a.total);
+  document.getElementById('summaryBar').innerHTML = ranked.map((p, r) => `
+    <div class="rank-chip ${r===0?'rank-1':''}">
+      <span class="rank-chip-num">${r+1}</span>
+      <span class="rank-chip-name">${p.name}</span>
+      <span class="rank-chip-score">${p.total}</span>
+    </div>`).join('');
+}
+
+// ===== ROUND CONFIRM =====
+function checkConfirmBtn() {
+  const g = curGame(); if (!g) return;
+  const total = g.players.length;
+  const done = g.players.filter((_, i) => newInputs[i] !== undefined).length;
+  const has = done > 0;
+  // ラウンド確定ボタン（スピン閉じているときだけ表示）
+  document.getElementById('confirmRoundBtn').classList.toggle('visible', has && !spinState);
+  // 進捗バー
+  const prog = document.getElementById('inputProgress');
+  const fill = document.getElementById('progressFill');
+  const label = document.getElementById('progressLabel');
+  if (has && !spinState) {
+    prog.classList.add('visible');
+    fill.style.width = (done / total * 100) + '%';
+    label.textContent = `${done} / ${total} 人入力済み`;
+  } else {
+    prog.classList.remove('visible');
+  }
+}
+
+function confirmRound() {
+  const g = curGame(); if (!g) return;
+  const scores = g.players.map((_, i) => newInputs[i] || 0);
+  g.rounds.push(scores);
+  scores.forEach((s, i) => { g.players[i].total += s; });
+  g.currentRound++;
+  newInputs = {}; spinState = null;
+  save(); renderTable();
+}
+
+function undoLastRound() {
+  const g = curGame(); if (!g || !g.rounds.length) return;
+  const last = g.rounds.pop();
+  last.forEach((s, i) => { g.players[i].total -= s; });
+  g.currentRound--;
+  newInputs = {}; spinState = null;
+  save(); renderTable();
+}
+
+function recalcTotal(g) {
+  g.players.forEach((p, i) => {
+    p.total = g.rounds.reduce((sum, r) => sum + (r[i] || 0), 0);
+  });
+}
+
+// ===== TOTAL DIRECT EDIT (ロングプレス) =====
+function editTotal(idx) {
+  const td = document.getElementById('total-cell-' + idx);
+  if (!td || td.querySelector('input')) return;
+  const g = curGame();
+  const input = document.createElement('input');
+  input.className = 'total-edit'; input.type = 'number';
+  input.value = g.players[idx].total; input.inputMode = 'numeric';
+  const commit = () => {
+    const v = parseInt(input.value);
+    if (!isNaN(v)) { g.players[idx].total = v; save(); }
+    renderTable();
+  };
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e => { if (e.key==='Enter') input.blur(); if (e.key==='Escape') renderTable(); });
+  td.innerHTML = ''; td.appendChild(input);
+  input.focus(); input.select();
+}
+
+// ロングプレス登録（テーブル再描画後に呼ぶ）
+function bindTotalLongPress() {
+  document.querySelectorAll('td.col-total[data-idx]').forEach(td => {
+    let timer = null;
+    const start = () => { timer = setTimeout(() => { editTotal(parseInt(td.dataset.idx)); }, 500); };
+    const cancel = () => { clearTimeout(timer); };
+    td.addEventListener('touchstart', start, { passive: true });
+    td.addEventListener('touchend', cancel);
+    td.addEventListener('touchmove', cancel);
+    td.addEventListener('mousedown', start);
+    td.addEventListener('mouseup', cancel);
+    td.addEventListener('mouseleave', cancel);
+  });
+}
+
+// ===== MENU =====
+function showGameMenu() {
+  document.getElementById('modalTitle').textContent = 'ゲームメニュー';
+  document.getElementById('modalActions').innerHTML = `
+    <button class="btn-modal" style="background:var(--card);color:var(--text)" onclick="showEditPlayers()">✏️ 名前を編集</button>
+    <button class="btn-modal" style="background:var(--card);color:var(--text)" onclick="goHome()">🏠 ホームに戻る</button>
+    <button class="btn-modal btn-modal-danger" onclick="confirmDelete()">🗑 このゲームを削除</button>
+    <button class="btn-modal btn-modal-cancel" onclick="closeModal()">キャンセル</button>`;
+  openModal();
+}
+
+function showEditPlayers() {
+  const g = curGame(); if (!g) return;
+  const titleField = `<div style="margin-bottom:16px">
+    <div style="font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">ゲーム名</div>
+    <input class="input-field" id="edit-game-name" value="${g.name}" maxlength="20" style="font-size:15px;padding:12px 14px">
+  </div>`;
+  const playerFields = `<div style="font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">プレイヤー名</div>`
+    + g.players.map((p, i) =>
+    `<div style="margin-bottom:8px">
+      <input class="input-field edit-player-name" data-idx="${i}" value="${p.name}" maxlength="10" style="font-size:15px;padding:12px 14px">
+    </div>`
+  ).join('');
+  document.getElementById('modalTitle').textContent = '名前を編集';
+  document.getElementById('modalActions').innerHTML = `
+    ${titleField}${playerFields}
+    <button class="btn-modal" style="background:var(--accent);color:#fff;margin-top:4px" onclick="savePlayerNames()">保存</button>
+    <button class="btn-modal btn-modal-cancel" onclick="showGameMenu()">戻る</button>`;
+}
+
+function savePlayerNames() {
+  const g = curGame(); if (!g) return;
+  const newName = document.getElementById('edit-game-name').value.trim();
+  if (newName) g.name = newName;
+  document.querySelectorAll('.edit-player-name').forEach(inp => {
+    const i = parseInt(inp.dataset.idx);
+    const v = inp.value.trim();
+    if (v) g.players[i].name = v;
+  });
+  save(); closeModal();
+  document.getElementById('headerGameName').textContent = g.name;
+  renderTable();
+}
+function confirmDelete() {
+  document.getElementById('modalTitle').textContent = '本当に削除しますか？';
+  document.getElementById('modalActions').innerHTML = `
+    <button class="btn-modal btn-modal-danger" onclick="deleteCurrentGame()">削除する</button>
+    <button class="btn-modal btn-modal-cancel" onclick="showGameMenu()">戻る</button>`;
+}
+function deleteCurrentGame() {
+  state.games = state.games.filter(g => g.id !== state.currentGameId);
+  save(); closeModal(); showHome();
+}
+function goHome() { closeModal(); showHome(); }
+function openModal() { document.getElementById('modal').classList.add('open'); }
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+
+// ===== INIT =====
+load(); renderGameList();
+</script>
+</body>
+</html>
